@@ -272,35 +272,23 @@ export function AdminDashboardPage() {
       {/* Procesos */}
       <section>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
-          Procesos disponibles
+          Proceso
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {db.procesos.map((p) => {
-            const active = p.id === procesoId;
-            return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => {
-                  setProcesoId(p.id);
-                  setSelectedIds(new Set());
-                  setDurationOverrides(new Map());
-                }}
-                className={[
-                  "text-left rounded-lg border p-4 transition-all bg-white",
-                  active
-                    ? "border-inabie-navy ring-2 ring-inabie-navy/30 shadow-sm"
-                    : "border-border hover:border-inabie-navy/40",
-                ].join(" ")}
-              >
-                <p className="text-xs font-mono text-inabie-navy">{p.codigo}</p>
-                <p className="text-sm font-medium mt-1 leading-snug">
-                  {p.nombre}
-                </p>
-              </button>
-            );
-          })}
-        </div>
+        <select
+          value={procesoId ?? ""}
+          onChange={(e) => {
+            setProcesoId(e.target.value);
+            setSelectedIds(new Set());
+            setDurationOverrides(new Map());
+          }}
+          className="w-full md:w-80 h-9 rounded-md border border-input bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-inabie-navy/30"
+        >
+          {db.procesos.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.codigo} — {p.nombre}
+            </option>
+          ))}
+        </select>
       </section>
 
       {/* Oferentes table */}
@@ -578,17 +566,17 @@ export function AdminDashboardPage() {
         Descargar subsanables.
       </Button>
 
-{showPreview && (
-  <Dialog open={showPreview} onOpenChange={setShowPreview}>
-    <DialogContent className="max-w-7xl w-full h-[95vh] p-2 flex items-center justify-center">
-      <img
-        src={previewImg}
-        alt="Vista previa"
-        className="w-auto h-full object-contain rounded-md"
-      />
-    </DialogContent>
-  </Dialog>
-)}
+      {showPreview && (
+        <Dialog open={showPreview} onOpenChange={setShowPreview}>
+          <DialogContent className="max-w-7xl w-full h-[95vh] p-2 flex items-center justify-center">
+            <img
+              src={previewImg}
+              alt="Vista previa"
+              className="w-auto h-9/12 object-contain rounded-md"
+            />
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Email preview dialog */}
       <Dialog
