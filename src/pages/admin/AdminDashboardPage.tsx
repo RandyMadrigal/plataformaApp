@@ -31,8 +31,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { crearNotificacion, useDb, ESTADO_LABEL, type Proceso } from "@/lib/rpm-store";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  crearNotificacion,
+  useDb,
+  ESTADO_LABEL,
+  type Proceso,
+} from "@/lib/rpm-store";
+
+import previewImg from "@/assets/preview.png";
 
 // ─── Duration helpers ─────────────────────────────────────────────────────────
 
@@ -63,7 +74,12 @@ function DurationPicker({
 }) {
   const set = (field: keyof DurationConfig, raw: string) => {
     const n = Math.max(0, parseInt(raw) || 0);
-    const capped = field === "hours" ? Math.min(n, 23) : field === "minutes" ? Math.min(n, 59) : n;
+    const capped =
+      field === "hours"
+        ? Math.min(n, 23)
+        : field === "minutes"
+          ? Math.min(n, 59)
+          : n;
     onChange({ ...value, [field]: capped });
   };
 
@@ -71,18 +87,26 @@ function DurationPicker({
     <div className="flex items-center gap-2">
       {(["days", "hours", "minutes"] as const).map((field, i) => (
         <div key={field} className="flex items-center gap-2">
-          {i > 0 && <span className="text-muted-foreground font-bold pb-4">:</span>}
+          {i > 0 && (
+            <span className="text-muted-foreground font-bold pb-4">:</span>
+          )}
           <div className="flex flex-col items-center">
             <Input
               type="number"
               min={0}
-              max={field === "hours" ? 23 : field === "minutes" ? 59 : undefined}
+              max={
+                field === "hours" ? 23 : field === "minutes" ? 59 : undefined
+              }
               value={value[field]}
               onChange={(e) => set(field, e.target.value)}
               className="w-16 text-center h-8 text-sm"
             />
             <span className="text-[10px] text-muted-foreground mt-0.5">
-              {field === "days" ? "días" : field === "hours" ? "horas" : "minutos"}
+              {field === "days"
+                ? "días"
+                : field === "hours"
+                  ? "horas"
+                  : "minutos"}
             </span>
           </div>
         </div>
@@ -107,12 +131,15 @@ const DEFAULT_DURATION: DurationConfig = { days: 1, hours: 0, minutes: 0 };
 export function AdminDashboardPage() {
   const db = useDb();
 
-  const [procesoId, setProcesoId] = useState<string | null>(db.procesos[0]?.id ?? null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [durationOverrides, setDurationOverrides] = useState<Map<string, DurationConfig>>(
-    new Map(),
+  const [procesoId, setProcesoId] = useState<string | null>(
+    db.procesos[0]?.id ?? null,
   );
-  const [globalDuration, setGlobalDuration] = useState<DurationConfig>(DEFAULT_DURATION);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [durationOverrides, setDurationOverrides] = useState<
+    Map<string, DurationConfig>
+  >(new Map());
+  const [globalDuration, setGlobalDuration] =
+    useState<DurationConfig>(DEFAULT_DURATION);
   const [globalDurationOpen, setGlobalDurationOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [emailPreviews, setEmailPreviews] = useState<EmailEntry[] | null>(null);
@@ -125,7 +152,9 @@ export function AdminDashboardPage() {
   const stats = useMemo(() => {
     const enviadas = db.notificaciones.length;
     const accedidos = db.notificaciones.filter((n) => n.fecha_acceso).length;
-    const completadas = db.notificaciones.filter((n) => n.estado === "completada").length;
+    const completadas = db.notificaciones.filter(
+      (n) => n.estado === "completada",
+    ).length;
     return { enviadas, accedidos, completadas };
   }, [db]);
 
@@ -141,9 +170,11 @@ export function AdminDashboardPage() {
   }, [db.oferentes, search]);
 
   const allFilteredSelected =
-    filteredOferentes.length > 0 && filteredOferentes.every((o) => selectedIds.has(o.id));
+    filteredOferentes.length > 0 &&
+    filteredOferentes.every((o) => selectedIds.has(o.id));
   const someFilteredSelected =
-    filteredOferentes.some((o) => selectedIds.has(o.id)) && !allFilteredSelected;
+    filteredOferentes.some((o) => selectedIds.has(o.id)) &&
+    !allFilteredSelected;
 
   const toggleAll = () => {
     setSelectedIds((prev) => {
@@ -166,7 +197,8 @@ export function AdminDashboardPage() {
     });
   };
 
-  const getDuration = (oid: string): DurationConfig => durationOverrides.get(oid) ?? globalDuration;
+  const getDuration = (oid: string): DurationConfig =>
+    durationOverrides.get(oid) ?? globalDuration;
 
   const setDurationOverride = (oid: string, d: DurationConfig) =>
     setDurationOverrides((prev) => new Map(prev).set(oid, d));
@@ -184,7 +216,11 @@ export function AdminDashboardPage() {
     selectedIds.forEach((oid) => {
       const oferente = db.oferentes.find((o) => o.id === oid);
       if (!oferente) return;
-      const notif = crearNotificacion(proceso.id, oferente.id, durationToMs(getDuration(oid)));
+      const notif = crearNotificacion(
+        proceso.id,
+        oferente.id,
+        durationToMs(getDuration(oid)),
+      );
       entries.push({
         proceso,
         oferenteNombre: oferente.nombre,
@@ -200,13 +236,24 @@ export function AdminDashboardPage() {
     );
   };
 
+  // ------------- Preview Image-----------------
+
+  const [showPreview, setShowPreview] = useState(false);
+
+  const handlePreviewImg = () => {
+    setShowPreview(true);
+  };
+
   return (
     <div className="space-y-6 max-w-6xl">
       {/* Header */}
       <header>
-        <h1 className="text-2xl font-bold tracking-tight">Dashboard administrativo</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          Dashboard administrativo
+        </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Selecciona un proceso, filtra y elige oferentes, configura el tiempo y envía.
+          Selecciona un proceso, filtra y elige oferentes, configura el tiempo y
+          envía.
         </p>
       </header>
 
@@ -215,7 +262,11 @@ export function AdminDashboardPage() {
         <StatCard icon={FileText} label="Procesos" value={db.procesos.length} />
         <StatCard icon={Mail} label="Correos enviados" value={stats.enviadas} />
         <StatCard icon={Users} label="Accedieron" value={stats.accedidos} />
-        <StatCard icon={CheckCircle2} label="Completadas" value={stats.completadas} />
+        <StatCard
+          icon={CheckCircle2}
+          label="Completadas"
+          value={stats.completadas}
+        />
       </section>
 
       {/* Procesos */}
@@ -243,7 +294,9 @@ export function AdminDashboardPage() {
                 ].join(" ")}
               >
                 <p className="text-xs font-mono text-inabie-navy">{p.codigo}</p>
-                <p className="text-sm font-medium mt-1 leading-snug">{p.nombre}</p>
+                <p className="text-sm font-medium mt-1 leading-snug">
+                  {p.nombre}
+                </p>
               </button>
             );
           })}
@@ -253,7 +306,6 @@ export function AdminDashboardPage() {
       {/* Oferentes table */}
       {proceso && (
         <section className="bg-white border rounded-lg overflow-hidden">
-
           {/* Toolbar */}
           <div className="p-4 border-b space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -268,11 +320,21 @@ export function AdminDashboardPage() {
 
               <div className="flex items-center gap-2 flex-wrap">
                 {/* Global duration */}
-                <Popover open={globalDurationOpen} onOpenChange={setGlobalDurationOpen}>
+                <Popover
+                  open={globalDurationOpen}
+                  onOpenChange={setGlobalDurationOpen}
+                >
                   <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-1.5 text-xs h-8">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 text-xs h-8"
+                    >
                       <Timer className="h-3.5 w-3.5" />
-                      Tiempo general: <span className="font-semibold">{formatDuration(globalDuration)}</span>
+                      Tiempo general:{" "}
+                      <span className="font-semibold">
+                        {formatDuration(globalDuration)}
+                      </span>
                       <ChevronDown className="h-3 w-3 opacity-50" />
                     </Button>
                   </PopoverTrigger>
@@ -280,9 +342,13 @@ export function AdminDashboardPage() {
                     <p className="text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
                       Tiempo de expiración por defecto
                     </p>
-                    <DurationPicker value={globalDuration} onChange={setGlobalDuration} />
+                    <DurationPicker
+                      value={globalDuration}
+                      onChange={setGlobalDuration}
+                    />
                     <p className="text-xs text-muted-foreground mt-3 max-w-[220px]">
-                      Se aplica a todos los oferentes que no tengan un tiempo individual configurado.
+                      Se aplica a todos los oferentes que no tengan un tiempo
+                      individual configurado.
                     </p>
                   </PopoverContent>
                 </Popover>
@@ -293,7 +359,10 @@ export function AdminDashboardPage() {
                     variant="ghost"
                     size="sm"
                     className="gap-1 text-xs text-muted-foreground h-8"
-                    onClick={() => { setSelectedIds(new Set()); setDurationOverrides(new Map()); }}
+                    onClick={() => {
+                      setSelectedIds(new Set());
+                      setDurationOverrides(new Map());
+                    }}
                   >
                     <X className="h-3.5 w-3.5" /> Limpiar
                   </Button>
@@ -341,7 +410,9 @@ export function AdminDashboardPage() {
                   <input
                     type="checkbox"
                     checked={allFilteredSelected}
-                    ref={(el) => { if (el) el.indeterminate = someFilteredSelected; }}
+                    ref={(el) => {
+                      if (el) el.indeterminate = someFilteredSelected;
+                    }}
                     onChange={toggleAll}
                     className="accent-inabie-navy h-4 w-4 cursor-pointer"
                     aria-label="Seleccionar todos"
@@ -357,7 +428,10 @@ export function AdminDashboardPage() {
             <TableBody>
               {filteredOferentes.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground py-10">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-muted-foreground py-10"
+                  >
                     <Search className="h-6 w-6 mx-auto mb-2 opacity-30" />
                     No se encontraron oferentes con "{search}"
                   </TableCell>
@@ -383,7 +457,10 @@ export function AdminDashboardPage() {
                     ].join(" ")}
                   >
                     {/* Checkbox */}
-                    <TableCell className="pl-4" onClick={(e) => e.stopPropagation()}>
+                    <TableCell
+                      className="pl-4"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <input
                         type="checkbox"
                         checked={isSelected}
@@ -393,8 +470,12 @@ export function AdminDashboardPage() {
                     </TableCell>
 
                     <TableCell className="font-medium">{o.nombre}</TableCell>
-                    <TableCell className="text-muted-foreground">{o.correo}</TableCell>
-                    <TableCell className="text-muted-foreground">{o.rnc ?? "—"}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {o.correo}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {o.rnc ?? "—"}
+                    </TableCell>
 
                     {/* Estado */}
                     <TableCell>
@@ -420,7 +501,10 @@ export function AdminDashboardPage() {
                     </TableCell>
 
                     {/* Duration picker */}
-                    <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
+                    <TableCell
+                      className="text-center"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
@@ -478,7 +562,8 @@ export function AdminDashboardPage() {
               </span>
               {selectedIds.size > 0 && (
                 <span className="font-semibold text-inabie-navy">
-                  {selectedIds.size} seleccionado{selectedIds.size !== 1 ? "s" : ""}
+                  {selectedIds.size} seleccionado
+                  {selectedIds.size !== 1 ? "s" : ""}
                 </span>
               )}
             </div>
@@ -486,8 +571,30 @@ export function AdminDashboardPage() {
         </section>
       )}
 
+      <Button
+        onClick={handlePreviewImg}
+        className="bg-inabie-navy hover:bg-inabie-navy-deep text-white gap-1.5 h-8"
+      >
+        Descargar subsanables.
+      </Button>
+
+{showPreview && (
+  <Dialog open={showPreview} onOpenChange={setShowPreview}>
+    <DialogContent className="max-w-7xl w-full h-[95vh] p-2 flex items-center justify-center">
+      <img
+        src={previewImg}
+        alt="Vista previa"
+        className="w-auto h-full object-contain rounded-md"
+      />
+    </DialogContent>
+  </Dialog>
+)}
+
       {/* Email preview dialog */}
-      <Dialog open={!!emailPreviews} onOpenChange={(open) => !open && setEmailPreviews(null)}>
+      <Dialog
+        open={!!emailPreviews}
+        onOpenChange={(open) => !open && setEmailPreviews(null)}
+      >
         <DialogContent className="max-w-2xl flex flex-col max-h-[85vh]">
           <DialogHeader>
             <DialogTitle>
@@ -496,7 +603,8 @@ export function AdminDashboardPage() {
                 : `Vista previa — ${emailPreviews?.length} correos`}
             </DialogTitle>
             <DialogDescription>
-              Simulación de envío. En producción se entregarán por servicio de correo.
+              Simulación de envío. En producción se entregarán por servicio de
+              correo.
             </DialogDescription>
           </DialogHeader>
 
@@ -546,8 +654,8 @@ function EmailCard({
             <span className="text-muted-foreground">Para:</span> {entry.correo}
           </p>
           <p>
-            <span className="text-muted-foreground">Asunto:</span> Carga de documentación requerida
-            — {entry.proceso.codigo}
+            <span className="text-muted-foreground">Asunto:</span> Carga de
+            documentación requerida — {entry.proceso.codigo}
           </p>
         </div>
         <div className="rounded-md border p-4 bg-white">
@@ -555,8 +663,8 @@ function EmailCard({
             Estimado <strong>{entry.oferenteNombre}</strong>,
           </p>
           <p className="mt-2 text-muted-foreground">
-            Se le notifica que debe acceder al siguiente enlace para completar la carga de
-            documentación requerida para el proceso{" "}
+            Se le notifica que debe acceder al siguiente enlace para completar
+            la carga de documentación requerida para el proceso{" "}
             <strong>{entry.proceso.codigo}</strong>.
           </p>
           <a
@@ -604,7 +712,9 @@ function StatCard({
   return (
     <div className="bg-white border rounded-lg p-4">
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground uppercase tracking-wide">{label}</span>
+        <span className="text-xs text-muted-foreground uppercase tracking-wide">
+          {label}
+        </span>
         <Icon className="h-4 w-4 text-inabie-navy" />
       </div>
       <p className="text-2xl font-bold mt-1">{value}</p>
